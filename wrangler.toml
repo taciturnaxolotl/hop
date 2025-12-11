@@ -8,6 +8,10 @@ command = "bun build src/index.html --outdir dist --minify"
 [observability]
 enabled = true
 
+[[routes]]
+pattern = "hop.dunkirk.sh"
+custom_domain = true
+
 [[kv_namespaces]]
 binding = "HOP"
 id = "ae7cd39a622b466d876b8410d22d1397"

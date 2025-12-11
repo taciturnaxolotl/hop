@@ -299,69 +299,12 @@
       position: relative;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--input-bg);
-      border: 0.0625rem solid var(--border-color);
-      border-radius: 0.25rem;
-      overflow: hidden;
-    }
-
-    th,
-    td {
-      padding: 0.75rem 0.875rem;
-      text-align: left;
-      border-bottom: 0.0625rem solid var(--border-color);
-      font-size: 0.8125rem;
-    }
-
-    th {
-      background: #252620;
-      color: var(--accent-primary);
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 0.6875rem;
-      letter-spacing: 0.03125rem;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tr:hover {
-      background: #2d2e28;
-    }
-
     .url-cell {
-      max-width: 25rem;
+      max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       color: var(--text-primary);
-    }
-
-    .short-cell {
-      color: var(--accent-bright);
-      font-weight: 700;
-    }
-
-    .short-cell a {
-      color: var(--accent-bright);
-      text-decoration: none;
-    }
-
-    .short-cell a:hover {
-      text-decoration: underline;
-    }
-
-    .date-cell {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-    }
-
-    .actions-cell {
-      text-align: right;
     }
 
     .btn-small {
@@ -657,34 +600,38 @@
       const totalHeight = urls.length * ROW_HEIGHT;
       urlsTable.innerHTML = '';
 
-      const viewport = document.createElement('div');
-      viewport.style.height = `${totalHeight}px`;
-      viewport.style.position = 'relative';
+      // Create container with sticky header
+      const container = document.createElement('div');
+      container.style.position = 'relative';
+      container.style.height = '100%';
 
-      const table = document.createElement('table');
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.tableLayout = 'fixed';
-
-      const thead = document.createElement('thead');
-      thead.style.position = 'sticky';
-      thead.style.top = '0';
-      thead.style.background = 'var(--input-bg)';
-      thead.style.zIndex = '10';
-      thead.innerHTML = `
-        <tr>
-          <th style="padding: 0.75rem 0.875rem; text-align: left; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem; width: 15%;">short</th>
-          <th style="padding: 0.75rem 0.875rem; text-align: left; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem; width: 50%;">url</th>
-          <th style="padding: 0.75rem 0.875rem; text-align: left; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem; width: 15%;">created</th>
-          <th style="padding: 0.75rem 0.875rem; text-align: right; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem; width: 20%;">actions</th>
-        </tr>
+      // Create sticky header
+      const header = document.createElement('div');
+      header.style.display = 'grid';
+      header.style.gridTemplateColumns = '15% 50% 15% 20%';
+      header.style.position = 'sticky';
+      header.style.top = '0';
+      header.style.background = 'var(--input-bg)';
+      header.style.zIndex = '10';
+      header.style.borderBottom = '0.0625rem solid var(--border-color)';
+      header.innerHTML = `
+        <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">short</div>
+        <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">url</div>
+        <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">created</div>
+        <div style="padding: 0.75rem 0.875rem; text-align: right; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">actions</div>
       `;
 
-      const tbody = document.createElement('tbody');
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      viewport.appendChild(table);
-      urlsTable.appendChild(viewport);
+      // Create scrollable content area
+      const scrollContent = document.createElement('div');
+      scrollContent.style.position = 'relative';
+      scrollContent.style.height = `${totalHeight}px`;
+
+      container.appendChild(header);
+      container.appendChild(scrollContent);
+      urlsTable.appendChild(container);
+
+      let lastScrollTop = -1;
+      let isInitialRender = true;
 
       function updateVisibleRows() {
         const scrollTop = urlsTable.scrollTop;
@@ -694,39 +641,60 @@
         const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - buffer);
         const endIndex = Math.min(urls.length, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + buffer);
 
-        tbody.innerHTML = '';
+        // Only update if scroll position changed significantly (skip this check on initial render)
+        if (!isInitialRender && Math.abs(scrollTop - lastScrollTop) < ROW_HEIGHT / 2) {
+          return;
+        }
+        isInitialRender = false;
+        lastScrollTop = scrollTop;
+
+        // Clear existing rows
+        scrollContent.innerHTML = '';
 
         for (let i = startIndex; i < endIndex; i++) {
           const item = urls[i];
-          const row = document.createElement('tr');
-          row.style.height = `${ROW_HEIGHT}px`;
+          
+          const row = document.createElement('div');
+          row.style.display = 'grid';
+          row.style.gridTemplateColumns = '15% 50% 15% 20%';
           row.style.position = 'absolute';
-          row.style.top = `${i * ROW_HEIGHT + 41}px`;
+          row.style.top = `${i * ROW_HEIGHT}px`;
           row.style.left = '0';
           row.style.right = '0';
-          row.style.display = 'table';
-          row.style.width = '100%';
-          row.style.tableLayout = 'fixed';
+          row.style.height = `${ROW_HEIGHT}px`;
+          row.style.borderBottom = '0.0625rem solid var(--border-color)';
+          row.style.transition = 'background 0.15s';
           row.dataset.short = item.shortCode;
+          
+          row.addEventListener('mouseenter', () => {
+            row.style.background = '#2d2e28';
+          });
+          row.addEventListener('mouseleave', () => {
+            row.style.background = '';
+          });
 
           row.innerHTML = `
-            <td style="padding: 0.75rem 0.875rem; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.8125rem; color: var(--accent-bright); font-weight: 700; width: 15%;">
+            <div style="padding: 0.75rem 0.875rem; font-size: 0.8125rem; color: var(--accent-bright); font-weight: 700; display: flex; align-items: center;">
               <a href="/${item.shortCode}" target="_blank" style="color: var(--accent-bright); text-decoration: none;">/${item.shortCode}</a>
-            </td>
-            <td style="padding: 0.75rem 0.875rem; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.8125rem; max-width: 25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); width: 50%;" title="${item.url}">${item.url}</td>
-            <td style="padding: 0.75rem 0.875rem; border-bottom: 0.0625rem solid var(--border-color); font-size: 0.75rem; color: var(--text-muted); width: 15%;">${new Date(item.created).toLocaleDateString()}</td>
-            <td style="padding: 0.75rem 0.875rem; border-bottom: 0.0625rem solid var(--border-color); text-align: right; width: 20%;">
-              <button onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')" class="btn-small">edit</button>
-              <button onclick="deleteUrl('${item.shortCode}')" class="btn-small btn-delete">delete</button>
-            </td>
+            </div>
+            <div class="url-cell" style="padding: 0.75rem 0.875rem; font-size: 0.8125rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center;" title="${item.url}">${item.url}</div>
+            <div style="padding: 0.75rem 0.875rem; font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center;">${new Date(item.created).toLocaleDateString()}</div>
+            <div style="padding: 0.75rem 0.875rem; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem;">
+              <button onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')" class="btn-small">✏️</button>
+              <button onclick="deleteUrl('${item.shortCode}')" class="btn-small btn-delete">🗑️</button>
+            </div>
           `;
 
-          tbody.appendChild(row);
+          scrollContent.appendChild(row);
         }
       }
 
-      urlsTable.addEventListener('scroll', updateVisibleRows);
-      updateVisibleRows();
+      urlsTable.addEventListener('scroll', updateVisibleRows, { passive: true });
+      
+      // Use requestAnimationFrame to ensure DOM is ready before initial render
+      requestAnimationFrame(() => {
+        updateVisibleRows();
+      });
     }
 
     function updateUrlCount() {
@@ -823,7 +791,9 @@
     };
 
     window.editUrl = (shortCode, currentUrl) => {
-      const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+      const row = document.querySelector(`div[data-short="${shortCode}"]`);
+      if (!row) return;
+      
       const urlCell = row.querySelector(".url-cell");
 
       urlCell.innerHTML = `
@@ -871,7 +841,9 @@
     };
 
     window.cancelEdit = (shortCode, originalUrl) => {
-      const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+      const row = document.querySelector(`div[data-short="${shortCode}"]`);
+      if (!row) return;
+      
       const urlCell = row.querySelector(".url-cell");
       urlCell.innerHTML = originalUrl;
       urlCell.title = originalUrl;
