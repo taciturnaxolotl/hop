@@ -1,494 +1,725 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>hop</title>
-	<link rel="icon"
-		href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛎️</text></svg>">
-	<style>
-		* {
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hop</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛎️</text></svg>" />
+  <style>
+    :root {
+      --bg-primary: oklch(23.17% 0.0113 115.0);
+      --text-primary: oklch(0.77 0.05 177.41);
+      --text-muted: oklch(61.43% 0.0603 149.4);
+      --accent-primary: oklch(82.83% 0.0539 158.7);
+      --accent-bright: oklch(0.81 0.05 164.12);
+      --input-bg: oklch(28.59% 0.0107 114.8);
+      --border-color: oklch(34.93% 0.0102 114.7);
+      --hover-bg: oklch(40.99% 0.0098 114.6);
+      --error-bg: oklch(58.72% 0.1531 28.0);
+      --error-text: oklch(73.36% 0.1635 27.9);
+    }
 
-		body {
-			font-family: 'Courier New', monospace;
-			background: #1d1e18;
-			color: #d9fff5;
-			min-height: 100vh;
-			padding: 40px 20px;
-		}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-		.container {
-			max-width: 900px;
-			margin: 0 auto;
-		}
+    html {
+      background: var(--bg-primary);
+    }
 
-		h1 {
-			font-size: 2.5rem;
-			margin-bottom: 0.5rem;
-			font-weight: 700;
-			background: linear-gradient(135deg, #6b8f71, #aad2ba, #b9f5d8);
-			-webkit-background-clip: text;
-			-webkit-text-fill-color: transparent;
-			background-clip: text;
-			letter-spacing: -1px;
-		}
+    body {
+      font-family: "Courier New", monospace;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2.5rem 1.25rem;
+      padding-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
 
-		.subtitle {
-			color: #6b8f71;
-			margin-bottom: 24px;
-			font-size: 13px;
-			font-family: monospace;
-		}
+    .loading-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 0.1875rem;
+      background: transparent;
+      z-index: 9999;
+      overflow: hidden;
+    }
 
-		.shortcut {
-			color: #6b8f71;
-			font-size: 11px;
-			margin-bottom: 16px;
-			font-family: monospace;
-		}
+    .loading-bar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--text-muted), var(--accent-primary), var(--accent-bright));
+      animation: loading 1.5s ease-in-out infinite;
+    }
 
-		.shortcut kbd {
-			background: #2a2b25;
-			padding: 2px 6px;
-			border-radius: 3px;
-			border: 1px solid #3a3b35;
-			font-size: 11px;
-		}
+    body:not(.loading) .loading-bar {
+      display: none;
+    }
 
-		.form-section {
-			margin-bottom: 32px;
-		}
+    @keyframes loading {
+      0% {
+        transform: translateX(-100%);
+      }
 
-		.form-row {
-			display: flex;
-			gap: 8px;
-			align-items: center;
-		}
+      50% {
+        transform: translateX(0%);
+      }
 
-		.form-row input[type="url"] {
-			flex: 1;
-			margin: 0;
-		}
+      100% {
+        transform: translateX(100%);
+      }
+    }
 
-		.form-row input[type="text"] {
-			width: 140px;
-			margin: 0;
-		}
+    main {
+      max-width: 56.25rem;
+      margin: 0 auto;
+      flex: 1;
+      width: 100%;
+      min-height: 90vh;
+    }
 
-		.form-row button {
-			width: auto;
-			padding: 12px 20px;
-			margin: 0;
-		}
+    header {
+      margin-bottom: 1.5rem;
+    }
 
-		input {
-			width: 100%;
-			padding: 12px 14px;
-			background: #2a2b25;
-			border: 1px solid #3a3b35;
-			border-radius: 4px;
-			color: #d9fff5;
-			font-size: 14px;
-			font-family: 'Courier New', monospace;
-			margin-bottom: 8px;
-			transition: border-color 0.15s;
-		}
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-muted), var(--accent-primary), var(--accent-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.0625rem;
+    }
 
-		input:focus {
-			outline: none;
-			border-color: #6b8f71;
-			background: #2d2e28;
-		}
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.8125rem;
+      font-family: monospace;
+    }
 
-		input::placeholder {
-			color: #4a4b45;
-		}
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
 
-		button {
-			width: 100%;
-			padding: 12px;
-			background: #6b8f71;
-			color: #1d1e18;
-			border: none;
-			border-radius: 4px;
-			font-size: 14px;
-			font-weight: 700;
-			cursor: pointer;
-			font-family: 'Courier New', monospace;
-			margin-top: 4px;
-			transition: background 0.15s;
-		}
+    a:hover {
+      color: var(--accent-bright);
+      text-decoration: underline;
+    }
 
-		button:hover {
-			background: #7a9e80;
-		}
+    a:focus {
+      outline: 0.125rem solid var(--accent-primary);
+      outline-offset: 0.125rem;
+    }
 
-		button:active {
-			background: #5a7f61;
-		}
+    .shortcut {
+      color: var(--text-muted);
+      font-size: 0.6875rem;
+      margin-bottom: 1rem;
+      font-family: monospace;
+    }
 
-		button:disabled {
-			opacity: 0.4;
-			cursor: not-allowed;
-		}
+    .shortcut kbd {
+      background: var(--input-bg);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.1875rem;
+      border: 0.0625rem solid var(--border-color);
+      font-size: 0.6875rem;
+    }
 
-		button:focus {
-			outline: 2px solid #aad2ba;
-			outline-offset: 2px;
-		}
+    .form-section {
+      margin-bottom: 2rem;
+    }
 
-		.result {
-			margin-top: 16px;
-			padding: 12px 14px;
-			background: #2a2b25;
-			border: 1px solid #3a3b35;
-			border-radius: 4px;
-			display: none;
-			font-family: 'Courier New', monospace;
-		}
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
 
-		.result.show {
-			display: block;
-		}
+    .form-row input[type="url"] {
+      flex: 1;
+      margin: 0;
+    }
 
-		.result.error {
-			border-color: #c75146;
-			color: #ff7b6d;
-		}
+    .form-row input[type="text"] {
+      width: 8.75rem;
+      margin: 0;
+    }
 
-		.short-url {
-			display: flex;
-			gap: 8px;
-			margin-top: 8px;
-		}
+    .form-row button {
+      width: auto;
+      padding: 0.75rem 1.25rem;
+      margin: 0;
+    }
 
-		.short-url input {
-			margin: 0;
-			flex: 1;
-			color: #b9f5d8;
-			font-weight: 700;
-		}
+    input {
+      width: 100%;
+      padding: 0.75rem 0.875rem;
+      background: var(--input-bg);
+      border: 0.0625rem solid var(--border-color);
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: "Courier New", monospace;
+      margin-bottom: 0.5rem;
+      transition: border-color 0.15s;
+    }
 
-		.copy-btn {
-			width: auto;
-			padding: 12px 16px;
-			margin: 0;
-			background: #aad2ba;
-		}
+    input:focus {
+      outline: none;
+      border-color: var(--text-muted);
+      background: #2d2e28;
+    }
 
-		.copy-btn:hover {
-			background: #b9f5d8;
-		}
+    input::placeholder {
+      color: var(--hover-bg);
+    }
 
-		.table-section {
-			margin-top: 48px;
-		}
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--text-muted);
+      color: var(--bg-primary);
+      border: none;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: "Courier New", monospace;
+      margin-top: 0.25rem;
+      transition: background 0.15s;
+    }
 
-		.table-header {
-			color: #6b8f71;
-			font-size: 13px;
-			margin-bottom: 12px;
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-		}
+    button:hover {
+      background: #7a9e80;
+    }
 
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			background: #2a2b25;
-			border: 1px solid #3a3b35;
-			border-radius: 4px;
-			overflow: hidden;
-		}
+    button:active {
+      background: #5a7f61;
+    }
 
-		th,
-		td {
-			padding: 12px 14px;
-			text-align: left;
-			border-bottom: 1px solid #3a3b35;
-			font-size: 13px;
-		}
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
-		th {
-			background: #252620;
-			color: #aad2ba;
-			font-weight: 700;
-			text-transform: uppercase;
-			font-size: 11px;
-			letter-spacing: 0.5px;
-		}
+    button:focus {
+      outline: 0.125rem solid var(--accent-primary);
+      outline-offset: 0.125rem;
+    }
 
-		tr:last-child td {
-			border-bottom: none;
-		}
+    .result {
+      margin-top: 1rem;
+      padding: 0.75rem 0.875rem;
+      background: var(--input-bg);
+      border: 0.0625rem solid var(--border-color);
+      border-radius: 0.25rem;
+      display: none;
+      font-family: "Courier New", monospace;
+    }
 
-		tr:hover {
-			background: #2d2e28;
-		}
+    .result.show {
+      display: block;
+    }
 
-		.url-cell {
-			max-width: 400px;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-			color: #d9fff5;
-		}
+    .result.error {
+      border-color: var(--error-bg);
+      color: var(--error-text);
+    }
 
-		.short-cell {
-			color: #b9f5d8;
-			font-weight: 700;
-		}
+    .short-url {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
 
-		.short-cell a {
-			color: #b9f5d8;
-			text-decoration: none;
-		}
+    .short-url input {
+      margin: 0;
+      flex: 1;
+      color: var(--accent-bright);
+      font-weight: 700;
+    }
 
-		.short-cell a:hover {
-			text-decoration: underline;
-		}
+    .copy-btn {
+      width: auto;
+      padding: 0.75rem 1rem;
+      margin: 0;
+      background: var(--accent-primary);
+    }
 
-		.date-cell {
-			color: #6b8f71;
-			font-size: 12px;
-		}
+    .copy-btn:hover {
+      background: var(--accent-bright);
+    }
 
-		.actions-cell {
-			text-align: right;
-		}
+    .table-section {
+      margin-top: 3rem;
+    }
 
-		.btn-small {
-			padding: 6px 12px;
-			font-size: 11px;
-			background: #3a3b35;
-			color: #aad2ba;
-			border: none;
-			border-radius: 3px;
-			cursor: pointer;
-			font-family: 'Courier New', monospace;
-			transition: background 0.15s;
-			margin-left: 4px;
-		}
+    .table-header {
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+      margin-bottom: 0.75rem;
+      font-weight: 400;
+    }
 
-		.btn-small:hover {
-			background: #4a4b45;
-		}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--input-bg);
+      border: 0.0625rem solid var(--border-color);
+      border-radius: 0.25rem;
+      overflow: hidden;
+    }
 
-		.btn-delete {
-			color: #ff7b6d;
-		}
+    th,
+    td {
+      padding: 0.75rem 0.875rem;
+      text-align: left;
+      border-bottom: 0.0625rem solid var(--border-color);
+      font-size: 0.8125rem;
+    }
 
-		.btn-delete:hover {
-			background: #c75146;
-			color: #1d1e18;
-		}
+    th {
+      background: #252620;
+      color: var(--accent-primary);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.03125rem;
+    }
 
-		.empty {
-			text-align: center;
-			padding: 40px;
-			color: #6b8f71;
-		}
+    tr:last-child td {
+      border-bottom: none;
+    }
 
-		.loading {
-			text-align: center;
-			padding: 20px;
-			color: #6b8f71;
-		}
+    tr:hover {
+      background: #2d2e28;
+    }
 
-		.edit-form {
-			display: flex;
-			gap: 8px;
-			align-items: center;
-		}
+    .url-cell {
+      max-width: 25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
 
-		.edit-form input {
-			margin: 0;
-			padding: 8px 10px;
-			font-size: 12px;
-		}
+    .short-cell {
+      color: var(--accent-bright);
+      font-weight: 700;
+    }
 
-		.edit-form button {
-			margin: 0;
-			padding: 8px 12px;
-			font-size: 11px;
-			width: auto;
-		}
-	</style>
+    .short-cell a {
+      color: var(--accent-bright);
+      text-decoration: none;
+    }
+
+    .short-cell a:hover {
+      text-decoration: underline;
+    }
+
+    .date-cell {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .actions-cell {
+      text-align: right;
+    }
+
+    .btn-small {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.6875rem;
+      background: var(--border-color);
+      color: var(--accent-primary);
+      border: none;
+      border-radius: 0.1875rem;
+      cursor: pointer;
+      font-family: "Courier New", monospace;
+      transition: background 0.15s;
+      margin-left: 0.25rem;
+    }
+
+    .btn-small:hover {
+      background: var(--hover-bg);
+    }
+
+    .btn-delete {
+      color: var(--error-text);
+    }
+
+    .btn-delete:hover {
+      background: var(--error-bg);
+      color: var(--bg-primary);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 2.5rem;
+      color: var(--text-muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 1.25rem;
+      color: var(--text-muted);
+    }
+
+    .edit-form {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .edit-form input {
+      margin: 0;
+      padding: 0.5rem 0.625rem;
+      font-size: 0.75rem;
+    }
+
+    .edit-form button {
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.6875rem;
+      width: auto;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: auto;
+    }
+  </style>
 </head>
 
-<body>
-	<div class="container">
-		<h1>🛎️ hop</h1>
-		<p class="subtitle">// fast url shortener</p>
+<body class="loading" style="background-color: var(--bg-primary)">
+  <div class="loading-bar"></div>
+  <main class="container">
+    <header>
+      <h1>🛎️ hop</h1>
+      <p class="subtitle">// fast url shortener</p>
+    </header>
 
-		<div class="form-section">
-			<div class="shortcut">
-				<kbd>tab</kbd> navigate • <kbd>enter</kbd> submit • <kbd>esc</kbd> clear • <kbd>cmd+k</kbd> focus
-			</div>
-			<form id="shortenForm">
-				<div class="form-row">
-					<input type="url" id="url" placeholder="https://example.com/very/long/url" required autofocus>
-					<input type="text" id="slug" placeholder="slug" pattern="[a-zA-Z0-9-_]+">
-					<button type="submit">shorten</button>
-				</div>
-			</form>
-			<div id="result" class="result">
-				<div id="resultMessage"></div>
-				<div id="shortUrlContainer"></div>
-			</div>
-		</div>
+    <section class="form-section">
+      <div class="shortcut">
+        <kbd>tab</kbd> navigate • <kbd>enter</kbd> submit •
+        <kbd>esc</kbd> clear • <kbd>cmd+k</kbd> focus
+      </div>
+      <form id="shortenForm">
+        <div class="form-row">
+          <input type="url" id="url" placeholder="https://example.com/very/long/url" required autofocus />
+          <input type="text" id="slug" placeholder="slug" pattern="[a-zA-Z0-9-_]+" />
+          <button type="submit">shorten</button>
+        </div>
+      </form>
+      <div id="result" class="result">
+        <div id="resultMessage"></div>
+        <div id="shortUrlContainer"></div>
+      </div>
+    </section>
 
-		<div class="table-section">
-			<div class="table-header">
-				<span>// existing urls</span>
-			</div>
-			<div id="urlsTable">
-				<div class="loading">loading...</div>
-			</div>
-		</div>
-	</div>
+    <section class="table-section">
+      <h2 class="table-header">
+        <span>// existing urls</span>
+      </h2>
+      <div id="urlsTable"></div>
+    </section>
+  </main>
 
-	<script>
-		const form = document.getElementById('shortenForm');
-		const result = document.getElementById('result');
-		const resultMessage = document.getElementById('resultMessage');
-		const shortUrlContainer = document.getElementById('shortUrlContainer');
-		const urlInput = document.getElementById('url');
-		const urlsTable = document.getElementById('urlsTable');
+  <footer>
+    <p><span id="urlCount">0 urls</span> • <time id="liveTime"></time></p>
+    <p>made with ♥︎ by <a href="https://dunkirk.sh">kieran klukas</a></p>
+  </footer>
 
-		document.addEventListener('keydown', (e) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-				e.preventDefault();
-				urlInput.focus();
-				urlInput.select();
-			}
-			if (e.key === 'Escape') {
-				form.reset();
-				result.classList.remove('show', 'error');
-				urlInput.focus();
-			}
-		});
+  <script>
+    const isReload =
+      performance.navigation.type === 1 ||
+      performance.getEntriesByType("navigation")[0]?.type === "reload";
 
-		async function loadUrls() {
-			try {
-				const response = await fetch('/api/urls');
-				const urls = await response.json();
+    if (isReload) {
+      document.body.classList.remove("loading");
+      const cached = sessionStorage.getItem("hop_urls");
+      if (cached) {
+        try {
+          const urls = JSON.parse(cached);
+          document.getElementById("urlsTable").innerHTML = urls;
+        } catch (e) { }
+      }
+    }
 
-				if (urls.length === 0) {
-					urlsTable.innerHTML = '<div class="empty">no urls yet</div>';
-					return;
-				}
+    const form = document.getElementById("shortenForm");
+    const result = document.getElementById("result");
+    const resultMessage = document.getElementById("resultMessage");
+    const shortUrlContainer = document.getElementById("shortUrlContainer");
+    const urlInput = document.getElementById("url");
+    const slugInput = document.getElementById("slug");
+    const urlsTable = document.getElementById("urlsTable");
+    let cachedUrls = [];
+    let debounceTimer;
+    let resultTimeout;
 
-				urls.sort((a, b) => b.created - a.created);
+    document.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        urlInput.focus();
+        urlInput.select();
+      }
+      if (e.key === "Escape") {
+        form.reset();
+        result.classList.remove("show", "error");
+        slugInput.style.borderColor = "var(--border-color)";
+        urlInput.focus();
+      }
+      if (
+        (e.key === "c" || e.key === "C") &&
+        document.getElementById("shortUrlInput")
+      ) {
+        if (e.target.tagName !== "INPUT") {
+          e.preventDefault();
+          copyToClipboard();
+        }
+      }
+    });
 
-				urlsTable.innerHTML = `
+    slugInput.addEventListener("input", (e) => {
+      clearTimeout(debounceTimer);
+      const slug = e.target.value.trim();
+      if (!slug) {
+        slugInput.style.borderColor = "var(--border-color)";
+        return;
+      }
+      debounceTimer = setTimeout(async () => {
+        const exists = cachedUrls.some((item) => item.shortCode === slug);
+        if (exists) {
+          slugInput.style.borderColor = "var(--error-bg)";
+        } else {
+          slugInput.style.borderColor = "var(--text-muted)";
+        }
+      }, 300);
+    });
+
+    async function loadUrls() {
+      try {
+        const response = await fetch("/api/urls");
+        const urls = await response.json();
+        cachedUrls = urls;
+        renderUrls();
+        document.body.classList.remove("loading");
+      } catch (error) {
+        urlsTable.innerHTML = '<div class="empty">failed to load urls</div>';
+        document.body.classList.remove("loading");
+      }
+    }
+
+    function renderUrls() {
+      if (cachedUrls.length === 0) {
+        urlsTable.innerHTML = '<div class="empty">no urls yet</div>';
+        return;
+      }
+
+      const urls = [...cachedUrls].sort((a, b) => b.created - a.created);
+
+      let table = urlsTable.querySelector("table");
+      if (!table) {
+        urlsTable.innerHTML = `
 					<table>
 						<thead>
 							<tr>
-								<th>short</th>
+								<th>slug</th>
 								<th>url</th>
 								<th>created</th>
 								<th></th>
 							</tr>
 						</thead>
-						<tbody>
-							${urls.map(item => `
-								<tr data-short="${item.shortCode}">
-									<td class="short-cell"><a href="/${item.shortCode}" target="_blank">/${item.shortCode}</a></td>
-									<td class="url-cell" title="${item.url}">${item.url}</td>
-									<td class="date-cell">${new Date(item.created).toLocaleDateString()}</td>
-									<td class="actions-cell">
-										<button class="btn-small" onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')">edit</button>
-										<button class="btn-small btn-delete" onclick="deleteUrl('${item.shortCode}')">delete</button>
-									</td>
-								</tr>
-							`).join('')}
-						</tbody>
+						<tbody></tbody>
 					</table>
 				`;
-			} catch (error) {
-				urlsTable.innerHTML = '<div class="empty">failed to load urls</div>';
-			}
-		}
+        table = urlsTable.querySelector("table");
+      }
 
-		loadUrls();
+      const tbody = table.querySelector("tbody");
+      const existingRows = new Map();
+      tbody.querySelectorAll("tr[data-short]").forEach((row) => {
+        existingRows.set(row.dataset.short, row);
+      });
 
-		form.addEventListener('submit', async (e) => {
-			e.preventDefault();
+      const newRows = new Map();
+      urls.forEach((item) => {
+        const existingRow = existingRows.get(item.shortCode);
 
-			const url = urlInput.value;
-			const slug = document.getElementById('slug').value;
-			const submitBtn = form.querySelector('button');
+        if (existingRow) {
+          const urlCell = existingRow.querySelector(".url-cell");
+          const dateCell = existingRow.querySelector(".date-cell");
 
-			submitBtn.disabled = true;
-			submitBtn.textContent = 'shortening...';
-			result.classList.remove('show', 'error');
+          if (urlCell && urlCell.textContent !== item.url) {
+            urlCell.textContent = item.url;
+            urlCell.title = item.url;
+          }
+          if (dateCell) {
+            const dateStr = new Date(item.created).toLocaleDateString();
+            if (dateCell.textContent !== dateStr) {
+              dateCell.textContent = dateStr;
+            }
+          }
 
-			try {
-				const response = await fetch('/api/shorten', {
-					method: 'POST',
-					headers: {'Content-Type': 'application/json'},
-					body: JSON.stringify({url, slug: slug || undefined}),
-				});
+          newRows.set(item.shortCode, existingRow);
+        } else {
+          const row = document.createElement("tr");
+          row.dataset.short = item.shortCode;
+          row.innerHTML = `
+						<td class="short-cell"><a href="/${item.shortCode}" target="_blank">/${item.shortCode}</a></td>
+						<td class="url-cell" title="${item.url}">${item.url}</td>
+						<td class="date-cell">${new Date(item.created).toLocaleDateString()}</td>
+						<td class="actions-cell">
+							<button class="btn-small" onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')">edit</button>
+							<button class="btn-small btn-delete" onclick="deleteUrl('${item.shortCode}')">delete</button>
+						</td>
+					`;
+          newRows.set(item.shortCode, row);
+        }
+      });
 
-				const data = await response.json();
+      existingRows.forEach((row, shortCode) => {
+        if (!newRows.has(shortCode)) {
+          row.remove();
+        }
+      });
 
-				if (!response.ok) {
-					throw new Error(data.error || 'Failed to shorten URL');
-				}
+      tbody.innerHTML = "";
+      urls.forEach((item) => {
+        const row = newRows.get(item.shortCode);
+        if (row) tbody.appendChild(row);
+      });
 
-				const shortUrl = window.location.origin + '/' + data.shortCode;
+      sessionStorage.setItem("hop_urls", urlsTable.innerHTML);
+      updateUrlCount();
+    }
 
-				resultMessage.textContent = '';
-				shortUrlContainer.innerHTML = `
+    function updateUrlCount() {
+      const count = cachedUrls.length;
+      document.getElementById("urlCount").textContent =
+        `${count} url${count !== 1 ? "s" : ""}`;
+    }
+
+    loadUrls();
+    urlInput.addEventListener("focus", () => {
+      if (cachedUrls.length === 0) loadUrls();
+    });
+
+    function updateLiveTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("en-US", {hour12: false});
+      document.getElementById("liveTime").textContent = timeStr;
+    }
+
+    updateLiveTime();
+    setInterval(updateLiveTime, 1000);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const url = urlInput.value;
+      const slug = slugInput.value;
+      const submitBtn = form.querySelector("button");
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "shortening...";
+      result.classList.remove("show", "error");
+
+      try {
+        const response = await fetch("/api/shorten", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({url, slug: slug || undefined}),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to shorten URL");
+        }
+
+        const shortUrl = window.location.origin + "/" + data.shortCode;
+
+        resultMessage.textContent = "";
+        shortUrlContainer.innerHTML = `
 					<div class="short-url">
 						<input type="text" value="${shortUrl}" readonly id="shortUrlInput">
 						<button class="copy-btn" onclick="copyToClipboard()">copy</button>
 					</div>
 				`;
-				result.classList.add('show');
+        result.classList.add("show");
 
-				const shortUrlInput = document.getElementById('shortUrlInput');
-				shortUrlInput.select();
-				shortUrlInput.focus();
+        const shortUrlInput = document.getElementById("shortUrlInput");
+        shortUrlInput.select();
+        shortUrlInput.focus();
 
-				form.reset();
-				loadUrls();
-			} catch (error) {
-				resultMessage.textContent = error.message;
-				shortUrlContainer.innerHTML = '';
-				result.classList.add('show', 'error');
-			} finally {
-				submitBtn.disabled = false;
-				submitBtn.textContent = 'shorten';
-			}
-		});
+        try {
+          await navigator.clipboard.writeText(shortUrl);
+        } catch (err) { }
 
-		window.copyToClipboard = async () => {
-			const input = document.getElementById('shortUrlInput');
-			try {
-				await navigator.clipboard.writeText(input.value);
-				const btn = document.querySelector('.copy-btn');
-				const originalText = btn.textContent;
-				btn.textContent = 'copied';
-				setTimeout(() => btn.textContent = originalText, 2000);
-			} catch (err) {
-				input.select();
-				document.execCommand('copy');
-			}
-		};
+        cachedUrls.unshift({
+          shortCode: data.shortCode,
+          url: url,
+          created: Date.now(),
+        });
+        renderUrls();
 
-		window.editUrl = (shortCode, currentUrl) => {
-			const row = document.querySelector(`tr[data-short="${shortCode}"]`);
-			const urlCell = row.querySelector('.url-cell');
+        form.reset();
+        slugInput.style.borderColor = "var(--border-color)";
 
-			urlCell.innerHTML = `
+        clearTimeout(resultTimeout);
+        resultTimeout = setTimeout(() => {
+          result.classList.remove("show");
+          urlInput.focus();
+        }, 3000);
+      } catch (error) {
+        resultMessage.textContent = error.message;
+        shortUrlContainer.innerHTML = "";
+        result.classList.add("show", "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "shorten";
+      }
+    });
+
+    window.copyToClipboard = async () => {
+      const input = document.getElementById("shortUrlInput");
+      try {
+        await navigator.clipboard.writeText(input.value);
+        const btn = document.querySelector(".copy-btn");
+        const originalText = btn.textContent;
+        btn.textContent = "copied";
+        setTimeout(() => (btn.textContent = originalText), 2000);
+      } catch (err) {
+        input.select();
+        document.execCommand("copy");
+      }
+    };
+
+    window.editUrl = (shortCode, currentUrl) => {
+      const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+      const urlCell = row.querySelector(".url-cell");
+
+      urlCell.innerHTML = `
 				<div class="edit-form">
 					<input type="url" value="${currentUrl}" id="editInput-${shortCode}" required>
 					<button onclick="saveEdit('${shortCode}')">save</button>
@@ -496,66 +727,69 @@
 				</div>
 			`;
 
-			const input = document.getElementById(`editInput-${shortCode}`);
-			input.focus();
-			input.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					saveEdit(shortCode);
-				} else if (e.key === 'Escape') {
-					cancelEdit(shortCode, currentUrl);
-				}
-			});
-		};
+      const input = document.getElementById(`editInput-${shortCode}`);
+      input.focus();
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          saveEdit(shortCode);
+        } else if (e.key === "Escape") {
+          cancelEdit(shortCode, currentUrl);
+        }
+      });
+    };
 
-		window.saveEdit = async (shortCode) => {
-			const input = document.getElementById(`editInput-${shortCode}`);
-			const newUrl = input.value;
+    window.saveEdit = async (shortCode) => {
+      const input = document.getElementById(`editInput-${shortCode}`);
+      const newUrl = input.value;
 
-			try {
-				const response = await fetch(`/api/urls/${shortCode}`, {
-					method: 'PUT',
-					headers: {'Content-Type': 'application/json'},
-					body: JSON.stringify({url: newUrl}),
-				});
+      try {
+        const response = await fetch(`/api/urls/${shortCode}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({url: newUrl}),
+        });
 
-				if (!response.ok) {
-					const data = await response.json();
-					throw new Error(data.error || 'Failed to update URL');
-				}
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to update URL");
+        }
 
-				loadUrls();
-			} catch (error) {
-				alert(error.message);
-			}
-		};
+        const item = cachedUrls.find((u) => u.shortCode === shortCode);
+        if (item) item.url = newUrl;
+        renderUrls();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
 
-		window.cancelEdit = (shortCode, originalUrl) => {
-			const row = document.querySelector(`tr[data-short="${shortCode}"]`);
-			const urlCell = row.querySelector('.url-cell');
-			urlCell.innerHTML = originalUrl;
-			urlCell.title = originalUrl;
-		};
+    window.cancelEdit = (shortCode, originalUrl) => {
+      const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+      const urlCell = row.querySelector(".url-cell");
+      urlCell.innerHTML = originalUrl;
+      urlCell.title = originalUrl;
+    };
 
-		window.deleteUrl = async (shortCode) => {
-			if (!confirm(`Delete /${shortCode}?`)) return;
+    window.deleteUrl = async (shortCode) => {
+      if (!confirm(`Delete /${shortCode}?`)) return;
 
-			try {
-				const response = await fetch(`/api/urls/${shortCode}`, {
-					method: 'DELETE',
-				});
+      try {
+        const response = await fetch(`/api/urls/${shortCode}`, {
+          method: "DELETE",
+        });
 
-				if (!response.ok) {
-					const data = await response.json();
-					throw new Error(data.error || 'Failed to delete URL');
-				}
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to delete URL");
+        }
 
-				loadUrls();
-			} catch (error) {
-				alert(error.message);
-			}
-		};
-	</script>
+        cachedUrls = cachedUrls.filter((u) => u.shortCode !== shortCode);
+        renderUrls();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+  </script>
 </body>
 
 </html>
