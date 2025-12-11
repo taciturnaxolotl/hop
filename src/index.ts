@@ -80,26 +80,41 @@ export default {
 		// Check auth for all other routes (except / which needs to load first)
 		if (url.pathname !== '/') {
 			const authHeader = request.headers.get('Authorization');
-			if (!authHeader || !authHeader.startsWith('Bearer ')) {
+			if (!authHeader) {
 				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 					status: 401,
 					headers: { 'Content-Type': 'application/json' },
 				});
 			}
 
-			const token = authHeader.slice(7);
-			const sessionData = await env.HOP.get(`session:${token}`);
+			// Check for API key authentication
+			if (authHeader.startsWith('Bearer ')) {
+				const token = authHeader.slice(7);
+				
+				// Check if it's an API key
+				if (token === env.API_KEY) {
+					// Valid API key, continue
+				} else {
+					// Check if it's a session token
+					const sessionData = await env.HOP.get(`session:${token}`);
 
-			if (!sessionData) {
-				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-					status: 401,
-					headers: { 'Content-Type': 'application/json' },
-				});
-			}
+					if (!sessionData) {
+						return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+							status: 401,
+							headers: { 'Content-Type': 'application/json' },
+						});
+					}
 
-			const session = JSON.parse(sessionData);
-			if (session.expiresAt < Date.now()) {
-				await env.HOP.delete(`session:${token}`);
+					const session = JSON.parse(sessionData);
+					if (session.expiresAt < Date.now()) {
+						await env.HOP.delete(`session:${token}`);
+						return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+							status: 401,
+							headers: { 'Content-Type': 'application/json' },
+						});
+					}
+				}
+			} else {
 				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 					status: 401,
 					headers: { 'Content-Type': 'application/json' },
@@ -277,4 +292,5 @@ async function generateSessionToken(): Promise<string> {
 interface Env {
 	HOP: KVNamespace;
 	AUTH_PASSWORD: string;
+	API_KEY: string;
 }
