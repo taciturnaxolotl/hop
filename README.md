@@ -1,5 +1,7 @@
 # 🛎️ Hop
 
+![screenshot of the website](https://hc-cdn.hel1.your-objectstorage.com/s/v3/a8ba600bac177769_hop.png)
+
 This is a super light weight shortlink service that runs at blazing speeds on cloudflare kv and supplies `dunkirk.sh/q`
 
 The canonical repo for this is hosted on tangled over at [`dunkirk.sh/hop`](https://tangled.org/@dunkirk.sh/hop)

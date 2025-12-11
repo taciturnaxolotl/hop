@@ -4,7 +4,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hop</title>
+  <title>hop - fast url shortener</title>
+  <meta name="description" content="hop - a fast, minimal URL shortener with virtual scrolling and developer-focused UI" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://hop.dunkirk.sh" />
+  <meta property="og:title" content="hop - fast url shortener" />
+  <meta property="og:description" content="minimal url shortener with virtual scrolling and developer-focused ui" />
+  <meta property="og:image" content="https://hc-cdn.hel1.your-objectstorage.com/s/v3/a8ba600bac177769_hop.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://hop.dunkirk.sh" />
+  <meta name="twitter:title" content="hop - fast url shortener" />
+  <meta name="twitter:description" content="minimal url shortener with virtual scrolling and developer-focused ui" />
+  <meta name="twitter:image" content="https://hc-cdn.hel1.your-objectstorage.com/s/v3/a8ba600bac177769_hop.png" />
+
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛎️</text></svg>" />
   <style>
@@ -388,7 +404,7 @@
     <section class="form-section">
       <div class="shortcut">
         <kbd>tab</kbd> navigate • <kbd>enter</kbd> submit •
-        <kbd>esc</kbd> clear • <kbd>cmd+k</kbd> focus • <kbd>cmd+l</kbd> logout
+        <kbd>esc</kbd> clear • <kbd>cmd+k</kbd> focus • <kbd>cmd+/</kbd> search • <kbd>cmd+l</kbd> logout
       </div>
       <form id="shortenForm">
         <div class="form-row">
@@ -488,11 +504,18 @@
         urlInput.focus();
         urlInput.select();
       }
+      if ((e.key === "/" && e.target.tagName !== "INPUT") || ((e.metaKey || e.ctrlKey) && e.key === "/")) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
       if (e.key === "Escape") {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+          e.target.blur();
+        }
         form.reset();
         result.classList.remove("show", "error");
         slugInput.style.borderColor = "var(--border-color)";
-        urlInput.focus();
       }
       if (e.key === "l" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();

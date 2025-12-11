@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 - hop</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛎️</text></svg>" />
+  <style>
+    :root {
+      --bg-primary: oklch(23.17% 0.0113 115.0);
+      --text-primary: oklch(0.77 0.05 177.41);
+      --text-muted: oklch(61.43% 0.0603 149.4);
+      --accent-primary: oklch(82.83% 0.0539 158.7);
+      --accent-bright: oklch(0.81 0.05 164.12);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg-primary);
+    }
+
+    body {
+      font-family: "Courier New", monospace;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .error-container {
+      max-width: 31.25rem;
+      width: 100%;
+    }
+
+    .error-code {
+      font-size: 6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-muted), var(--accent-primary), var(--accent-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.125rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    p {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      transition: color 0.15s;
+      font-size: 0.875rem;
+    }
+
+    a:hover {
+      color: var(--accent-bright);
+      text-decoration: underline;
+    }
+
+    .short-code {
+      background: oklch(28.59% 0.0107 114.8);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.1875rem;
+      color: var(--accent-bright);
+      font-weight: 700;
+      font-family: "Courier New", monospace;
+    }
+  </style>
+</head>
+
+<body style="background-color: var(--bg-primary)">
+  <div class="error-container">
+    <div class="error-code">404</div>
+    <h1>short url not found</h1>
+    <p>
+      the short code <span class="short-code" id="shortCode"></span> doesn't exist or has been deleted.
+    </p>
+    <a href="/">← back to hop</a>
+  </div>
+
+  <script>
+    // Extract short code from URL
+    const shortCode = window.location.pathname.slice(1);
+    if (shortCode) {
+      document.getElementById('shortCode').textContent = '/' + shortCode;
+    } else {
+      document.getElementById('shortCode').textContent = 'unknown';
+    }
+  </script>
+</body>
+
+</html>

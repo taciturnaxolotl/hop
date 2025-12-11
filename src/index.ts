@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import indexHTML from './index.html';
 import loginHTML from './login.html';
+import notFoundHTML from './404.html';
 
 export default {
 	async fetch(
@@ -26,9 +27,9 @@ export default {
 				return Response.redirect(targetUrl, 302);
 			}
 
-			return new Response('Short URL not found', {
+			return new Response(notFoundHTML, {
 				status: 404,
-				headers: { 'Content-Type': 'text/plain' },
+				headers: { 'Content-Type': 'text/html' },
 			});
 		}
 
