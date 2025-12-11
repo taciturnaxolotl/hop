@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>hop</title>
+	<link rel="icon"
+		href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛎️</text></svg>">
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Courier New', monospace;
+			background: #1d1e18;
+			color: #d9fff5;
+			min-height: 100vh;
+			padding: 40px 20px;
+		}
+
+		.container {
+			max-width: 900px;
+			margin: 0 auto;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin-bottom: 0.5rem;
+			font-weight: 700;
+			background: linear-gradient(135deg, #6b8f71, #aad2ba, #b9f5d8);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			letter-spacing: -1px;
+		}
+
+		.subtitle {
+			color: #6b8f71;
+			margin-bottom: 24px;
+			font-size: 13px;
+			font-family: monospace;
+		}
+
+		.shortcut {
+			color: #6b8f71;
+			font-size: 11px;
+			margin-bottom: 16px;
+			font-family: monospace;
+		}
+
+		.shortcut kbd {
+			background: #2a2b25;
+			padding: 2px 6px;
+			border-radius: 3px;
+			border: 1px solid #3a3b35;
+			font-size: 11px;
+		}
+
+		.form-section {
+			margin-bottom: 32px;
+		}
+
+		.form-row {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+
+		.form-row input[type="url"] {
+			flex: 1;
+			margin: 0;
+		}
+
+		.form-row input[type="text"] {
+			width: 140px;
+			margin: 0;
+		}
+
+		.form-row button {
+			width: auto;
+			padding: 12px 20px;
+			margin: 0;
+		}
+
+		input {
+			width: 100%;
+			padding: 12px 14px;
+			background: #2a2b25;
+			border: 1px solid #3a3b35;
+			border-radius: 4px;
+			color: #d9fff5;
+			font-size: 14px;
+			font-family: 'Courier New', monospace;
+			margin-bottom: 8px;
+			transition: border-color 0.15s;
+		}
+
+		input:focus {
+			outline: none;
+			border-color: #6b8f71;
+			background: #2d2e28;
+		}
+
+		input::placeholder {
+			color: #4a4b45;
+		}
+
+		button {
+			width: 100%;
+			padding: 12px;
+			background: #6b8f71;
+			color: #1d1e18;
+			border: none;
+			border-radius: 4px;
+			font-size: 14px;
+			font-weight: 700;
+			cursor: pointer;
+			font-family: 'Courier New', monospace;
+			margin-top: 4px;
+			transition: background 0.15s;
+		}
+
+		button:hover {
+			background: #7a9e80;
+		}
+
+		button:active {
+			background: #5a7f61;
+		}
+
+		button:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+
+		button:focus {
+			outline: 2px solid #aad2ba;
+			outline-offset: 2px;
+		}
+
+		.result {
+			margin-top: 16px;
+			padding: 12px 14px;
+			background: #2a2b25;
+			border: 1px solid #3a3b35;
+			border-radius: 4px;
+			display: none;
+			font-family: 'Courier New', monospace;
+		}
+
+		.result.show {
+			display: block;
+		}
+
+		.result.error {
+			border-color: #c75146;
+			color: #ff7b6d;
+		}
+
+		.short-url {
+			display: flex;
+			gap: 8px;
+			margin-top: 8px;
+		}
+
+		.short-url input {
+			margin: 0;
+			flex: 1;
+			color: #b9f5d8;
+			font-weight: 700;
+		}
+
+		.copy-btn {
+			width: auto;
+			padding: 12px 16px;
+			margin: 0;
+			background: #aad2ba;
+		}
+
+		.copy-btn:hover {
+			background: #b9f5d8;
+		}
+
+		.table-section {
+			margin-top: 48px;
+		}
+
+		.table-header {
+			color: #6b8f71;
+			font-size: 13px;
+			margin-bottom: 12px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			background: #2a2b25;
+			border: 1px solid #3a3b35;
+			border-radius: 4px;
+			overflow: hidden;
+		}
+
+		th,
+		td {
+			padding: 12px 14px;
+			text-align: left;
+			border-bottom: 1px solid #3a3b35;
+			font-size: 13px;
+		}
+
+		th {
+			background: #252620;
+			color: #aad2ba;
+			font-weight: 700;
+			text-transform: uppercase;
+			font-size: 11px;
+			letter-spacing: 0.5px;
+		}
+
+		tr:last-child td {
+			border-bottom: none;
+		}
+
+		tr:hover {
+			background: #2d2e28;
+		}
+
+		.url-cell {
+			max-width: 400px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			color: #d9fff5;
+		}
+
+		.short-cell {
+			color: #b9f5d8;
+			font-weight: 700;
+		}
+
+		.short-cell a {
+			color: #b9f5d8;
+			text-decoration: none;
+		}
+
+		.short-cell a:hover {
+			text-decoration: underline;
+		}
+
+		.date-cell {
+			color: #6b8f71;
+			font-size: 12px;
+		}
+
+		.actions-cell {
+			text-align: right;
+		}
+
+		.btn-small {
+			padding: 6px 12px;
+			font-size: 11px;
+			background: #3a3b35;
+			color: #aad2ba;
+			border: none;
+			border-radius: 3px;
+			cursor: pointer;
+			font-family: 'Courier New', monospace;
+			transition: background 0.15s;
+			margin-left: 4px;
+		}
+
+		.btn-small:hover {
+			background: #4a4b45;
+		}
+
+		.btn-delete {
+			color: #ff7b6d;
+		}
+
+		.btn-delete:hover {
+			background: #c75146;
+			color: #1d1e18;
+		}
+
+		.empty {
+			text-align: center;
+			padding: 40px;
+			color: #6b8f71;
+		}
+
+		.loading {
+			text-align: center;
+			padding: 20px;
+			color: #6b8f71;
+		}
+
+		.edit-form {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+
+		.edit-form input {
+			margin: 0;
+			padding: 8px 10px;
+			font-size: 12px;
+		}
+
+		.edit-form button {
+			margin: 0;
+			padding: 8px 12px;
+			font-size: 11px;
+			width: auto;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<h1>🛎️ hop</h1>
+		<p class="subtitle">// fast url shortener</p>
+
+		<div class="form-section">
+			<div class="shortcut">
+				<kbd>tab</kbd> navigate • <kbd>enter</kbd> submit • <kbd>esc</kbd> clear • <kbd>cmd+k</kbd> focus
+			</div>
+			<form id="shortenForm">
+				<div class="form-row">
+					<input type="url" id="url" placeholder="https://example.com/very/long/url" required autofocus>
+					<input type="text" id="slug" placeholder="slug" pattern="[a-zA-Z0-9-_]+">
+					<button type="submit">shorten</button>
+				</div>
+			</form>
+			<div id="result" class="result">
+				<div id="resultMessage"></div>
+				<div id="shortUrlContainer"></div>
+			</div>
+		</div>
+
+		<div class="table-section">
+			<div class="table-header">
+				<span>// existing urls</span>
+			</div>
+			<div id="urlsTable">
+				<div class="loading">loading...</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const form = document.getElementById('shortenForm');
+		const result = document.getElementById('result');
+		const resultMessage = document.getElementById('resultMessage');
+		const shortUrlContainer = document.getElementById('shortUrlContainer');
+		const urlInput = document.getElementById('url');
+		const urlsTable = document.getElementById('urlsTable');
+
+		document.addEventListener('keydown', (e) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+				e.preventDefault();
+				urlInput.focus();
+				urlInput.select();
+			}
+			if (e.key === 'Escape') {
+				form.reset();
+				result.classList.remove('show', 'error');
+				urlInput.focus();
+			}
+		});
+
+		async function loadUrls() {
+			try {
+				const response = await fetch('/api/urls');
+				const urls = await response.json();
+
+				if (urls.length === 0) {
+					urlsTable.innerHTML = '<div class="empty">no urls yet</div>';
+					return;
+				}
+
+				urls.sort((a, b) => b.created - a.created);
+
+				urlsTable.innerHTML = `
+					<table>
+						<thead>
+							<tr>
+								<th>short</th>
+								<th>url</th>
+								<th>created</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							${urls.map(item => `
+								<tr data-short="${item.shortCode}">
+									<td class="short-cell"><a href="/${item.shortCode}" target="_blank">/${item.shortCode}</a></td>
+									<td class="url-cell" title="${item.url}">${item.url}</td>
+									<td class="date-cell">${new Date(item.created).toLocaleDateString()}</td>
+									<td class="actions-cell">
+										<button class="btn-small" onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')">edit</button>
+										<button class="btn-small btn-delete" onclick="deleteUrl('${item.shortCode}')">delete</button>
+									</td>
+								</tr>
+							`).join('')}
+						</tbody>
+					</table>
+				`;
+			} catch (error) {
+				urlsTable.innerHTML = '<div class="empty">failed to load urls</div>';
+			}
+		}
+
+		loadUrls();
+
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+
+			const url = urlInput.value;
+			const slug = document.getElementById('slug').value;
+			const submitBtn = form.querySelector('button');
+
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'shortening...';
+			result.classList.remove('show', 'error');
+
+			try {
+				const response = await fetch('/api/shorten', {
+					method: 'POST',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify({url, slug: slug || undefined}),
+				});
+
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to shorten URL');
+				}
+
+				const shortUrl = window.location.origin + '/' + data.shortCode;
+
+				resultMessage.textContent = '';
+				shortUrlContainer.innerHTML = `
+					<div class="short-url">
+						<input type="text" value="${shortUrl}" readonly id="shortUrlInput">
+						<button class="copy-btn" onclick="copyToClipboard()">copy</button>
+					</div>
+				`;
+				result.classList.add('show');
+
+				const shortUrlInput = document.getElementById('shortUrlInput');
+				shortUrlInput.select();
+				shortUrlInput.focus();
+
+				form.reset();
+				loadUrls();
+			} catch (error) {
+				resultMessage.textContent = error.message;
+				shortUrlContainer.innerHTML = '';
+				result.classList.add('show', 'error');
+			} finally {
+				submitBtn.disabled = false;
+				submitBtn.textContent = 'shorten';
+			}
+		});
+
+		window.copyToClipboard = async () => {
+			const input = document.getElementById('shortUrlInput');
+			try {
+				await navigator.clipboard.writeText(input.value);
+				const btn = document.querySelector('.copy-btn');
+				const originalText = btn.textContent;
+				btn.textContent = 'copied';
+				setTimeout(() => btn.textContent = originalText, 2000);
+			} catch (err) {
+				input.select();
+				document.execCommand('copy');
+			}
+		};
+
+		window.editUrl = (shortCode, currentUrl) => {
+			const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+			const urlCell = row.querySelector('.url-cell');
+
+			urlCell.innerHTML = `
+				<div class="edit-form">
+					<input type="url" value="${currentUrl}" id="editInput-${shortCode}" required>
+					<button onclick="saveEdit('${shortCode}')">save</button>
+					<button onclick="cancelEdit('${shortCode}', '${currentUrl.replace(/'/g, "\\'")}')">cancel</button>
+				</div>
+			`;
+
+			const input = document.getElementById(`editInput-${shortCode}`);
+			input.focus();
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					saveEdit(shortCode);
+				} else if (e.key === 'Escape') {
+					cancelEdit(shortCode, currentUrl);
+				}
+			});
+		};
+
+		window.saveEdit = async (shortCode) => {
+			const input = document.getElementById(`editInput-${shortCode}`);
+			const newUrl = input.value;
+
+			try {
+				const response = await fetch(`/api/urls/${shortCode}`, {
+					method: 'PUT',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify({url: newUrl}),
+				});
+
+				if (!response.ok) {
+					const data = await response.json();
+					throw new Error(data.error || 'Failed to update URL');
+				}
+
+				loadUrls();
+			} catch (error) {
+				alert(error.message);
+			}
+		};
+
+		window.cancelEdit = (shortCode, originalUrl) => {
+			const row = document.querySelector(`tr[data-short="${shortCode}"]`);
+			const urlCell = row.querySelector('.url-cell');
+			urlCell.innerHTML = originalUrl;
+			urlCell.title = originalUrl;
+		};
+
+		window.deleteUrl = async (shortCode) => {
+			if (!confirm(`Delete /${shortCode}?`)) return;
+
+			try {
+				const response = await fetch(`/api/urls/${shortCode}`, {
+					method: 'DELETE',
+				});
+
+				if (!response.ok) {
+					const data = await response.json();
+					throw new Error(data.error || 'Failed to delete URL');
+				}
+
+				loadUrls();
+			} catch (error) {
+				alert(error.message);
+			}
+		};
+	</script>
+</body>
+
+</html>
