@@ -545,8 +545,17 @@
     });
 
     searchInput.addEventListener("input", () => {
+      // Instant search on loaded data
+      applySearch();
+      
+      // Debounced server search for more results
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(applySearch, 150);
+      debounceTimer = setTimeout(() => {
+        const query = searchInput.value.trim();
+        if (query) {
+          searchServer(query);
+        }
+      }, 500);
     });
 
     async function loadUrls() {
@@ -559,6 +568,24 @@
       } catch (error) {
         urlsTable.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">failed to load urls</div>';
         document.body.classList.remove("loading");
+      }
+    }
+
+    async function searchServer(query) {
+      try {
+        const response = await fetch(`/api/urls?limit=1000&search=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        // Merge server results with existing data
+        const existingCodes = new Set(allUrls.map(u => u.shortCode));
+        const newUrls = data.urls.filter(u => !existingCodes.has(u.shortCode));
+        
+        if (newUrls.length > 0) {
+          allUrls.push(...newUrls);
+          applySearch();
+        }
+      } catch (error) {
+        console.error('Server search failed:', error);
       }
     }
 
