@@ -452,6 +452,9 @@
       window.location.href = '/login';
     }
 
+    // Track user role globally
+    let userRole = null;
+
     // Add auth header to all API requests
     const originalFetch = window.fetch;
     window.fetch = function (...args) {
@@ -583,6 +586,14 @@
 
     async function loadUrls() {
       try {
+        // Fetch user info to determine role
+        const meResponse = await fetch("/api/me");
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          userRole = meData.role;
+          applyViewerMode();
+        }
+
         const response = await fetch("/api/urls?limit=1000");
         const data = await response.json();
         allUrls = data.urls;
@@ -592,6 +603,17 @@
         urlsTable.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">failed to load urls</div>';
         document.body.classList.remove("loading");
       }
+    }
+
+    function applyViewerMode() {
+      if (userRole === 'viewer') {
+        // Hide the shorten form
+        document.querySelector('.form-section').style.display = 'none';
+      }
+    }
+
+    function isViewOnly() {
+      return userRole === 'viewer';
     }
 
     async function searchServer(query) {
@@ -643,19 +665,21 @@
       container.style.height = '100%';
 
       // Create sticky header
+      const gridColumns = isViewOnly() ? '20% 60% 20%' : '15% 50% 15% 20%';
       const header = document.createElement('div');
       header.style.display = 'grid';
-      header.style.gridTemplateColumns = '15% 50% 15% 20%';
+      header.style.gridTemplateColumns = gridColumns;
       header.style.position = 'sticky';
       header.style.top = '0';
       header.style.background = 'var(--input-bg)';
       header.style.zIndex = '10';
       header.style.borderBottom = '0.0625rem solid var(--border-color)';
+      const actionsHeader = isViewOnly() ? '' : `<div style="padding: 0.75rem 0.875rem; text-align: right; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">actions</div>`;
       header.innerHTML = `
         <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">short</div>
         <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">url</div>
         <div style="padding: 0.75rem 0.875rem; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">created</div>
-        <div style="padding: 0.75rem 0.875rem; text-align: right; font-size: 0.6875rem; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03125rem;">actions</div>
+        ${actionsHeader}
       `;
 
       // Create scrollable content area
@@ -693,7 +717,7 @@
 
           const row = document.createElement('div');
           row.style.display = 'grid';
-          row.style.gridTemplateColumns = '15% 50% 15% 20%';
+          row.style.gridTemplateColumns = gridColumns;
           row.style.position = 'absolute';
           row.style.top = `${i * ROW_HEIGHT}px`;
           row.style.left = '0';
@@ -710,16 +734,20 @@
             row.style.background = '';
           });
 
+          const actionsColumn = isViewOnly() ? '' : `
+            <div style="padding: 0.75rem 0.875rem; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem;">
+              <button onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')" class="btn-small">✏️</button>
+              <button onclick="deleteUrl('${item.shortCode}')" class="btn-small btn-delete">🗑️</button>
+            </div>
+          `;
+
           row.innerHTML = `
             <div style="padding: 0.75rem 0.875rem; font-size: 0.8125rem; color: var(--accent-bright); font-weight: 700; display: flex; align-items: center;">
               <a href="/${item.shortCode}" target="_blank" style="color: var(--accent-bright); text-decoration: none;">/${item.shortCode}</a>
             </div>
             <div class="url-cell" style="padding: 0.75rem 0.875rem; font-size: 0.8125rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center;" title="${item.url}">${item.url}</div>
             <div style="padding: 0.75rem 0.875rem; font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center;"><span data-created="${item.created}">${formatSmartTime(item.created)}</span></div>
-            <div style="padding: 0.75rem 0.875rem; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem;">
-              <button onclick="editUrl('${item.shortCode}', '${item.url.replace(/'/g, "\\'")}')" class="btn-small">✏️</button>
-              <button onclick="deleteUrl('${item.shortCode}')" class="btn-small btn-delete">🗑️</button>
-            </div>
+            ${actionsColumn}
           `;
 
           scrollContent.appendChild(row);

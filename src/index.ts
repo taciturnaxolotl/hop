@@ -114,8 +114,8 @@ export default {
 
 				const tokenData = await tokenResponse.json();
 
-				// Check if user has admin role
-				if (tokenData.role !== 'admin') {
+				// Check if user has admin or viewer role
+				if (tokenData.role !== 'admin' && tokenData.role !== 'viewer') {
 					return Response.redirect(new URL('/login?error=unauthorized_role', request.url).toString(), 302);
 				}
 
@@ -156,7 +156,38 @@ export default {
 			});
 		}
 
+		// Get current user info endpoint
+		if (url.pathname === '/api/me' && request.method === 'GET') {
+			const authHeader = request.headers.get('Authorization');
+			if (!authHeader || !authHeader.startsWith('Bearer ')) {
+				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			const token = authHeader.slice(7);
+			const sessionData = await env.HOP.get(`session:${token}`);
+
+			if (!sessionData) {
+				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			const session = JSON.parse(sessionData);
+			return new Response(JSON.stringify({
+				role: session.role,
+				profile: session.profile,
+				me: session.me,
+			}), {
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
 		// Check auth for all other routes (except / which needs to load first)
+		let userRole: string | null = null;
 		if (url.pathname !== '/') {
 			const authHeader = request.headers.get('Authorization');
 			if (!authHeader) {
@@ -172,7 +203,8 @@ export default {
 				
 				// Check if it's an API key
 				if (token === env.API_KEY) {
-					// Valid API key, continue
+					// Valid API key, treat as admin
+					userRole = 'admin';
 				} else {
 					// Check if it's a session token
 					const sessionData = await env.HOP.get(`session:${token}`);
@@ -192,10 +224,23 @@ export default {
 							headers: { 'Content-Type': 'application/json' },
 						});
 					}
+					userRole = session.role;
 				}
 			} else {
 				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			// Block write operations for viewers
+			const isWriteOperation = 
+				(url.pathname === '/api/shorten' && request.method === 'POST') ||
+				(url.pathname.startsWith('/api/urls/') && (request.method === 'PUT' || request.method === 'DELETE'));
+			
+			if (isWriteOperation && userRole === 'viewer') {
+				return new Response(JSON.stringify({ error: 'Forbidden: View-only access' }), {
+					status: 403,
 					headers: { 'Content-Type': 'application/json' },
 				});
 			}
