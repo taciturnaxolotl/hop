@@ -159,6 +159,10 @@
       font-size: 0.6875rem;
     }
 
+    .viewer-shortcut {
+      display: none;
+    }
+
     .form-section {
       margin-bottom: 2rem;
     }
@@ -285,7 +289,7 @@
     }
 
     .table-section {
-      margin-top: 3rem;
+      margin-top: 0;
     }
 
     .table-controls {
@@ -420,6 +424,9 @@
     </section>
 
     <section class="table-section">
+      <div class="shortcut viewer-shortcut">
+        <kbd>cmd+k</kbd> focus • <kbd>cmd+/</kbd> search • <kbd>cmd+l</kbd> logout
+      </div>
       <h2 class="table-header">
         <span>// existing urls</span>
       </h2>
@@ -607,8 +614,8 @@
 
     function applyViewerMode() {
       if (userRole === 'viewer') {
-        // Hide the shorten form
         document.querySelector('.form-section').style.display = 'none';
+        document.querySelector('.viewer-shortcut').style.display = 'block';
       }
     }
 
