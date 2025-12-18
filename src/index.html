@@ -436,6 +436,15 @@
   </footer>
 
   <script>
+    // Check for token in URL (from OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    if (tokenParam) {
+      localStorage.setItem('hop_session', tokenParam);
+      // Clean URL
+      window.history.replaceState({}, document.title, '/');
+    }
+
     // Check for session token
     const token = localStorage.getItem('hop_session');
     if (!token) {

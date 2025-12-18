@@ -33,35 +33,114 @@ export default {
 			});
 		}
 
-		// Login endpoint
-		if (url.pathname === '/api/login' && request.method === 'POST') {
-			try {
-				const { password } = await request.json();
+		// OAuth initiation endpoint
+		if (url.pathname === '/api/login' && request.method === 'GET') {
+			const state = nanoid(32);
+			const codeVerifier = generateCodeVerifier();
+			const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-				if (password !== env.AUTH_PASSWORD) {
-					return new Response(JSON.stringify({ error: 'Invalid password' }), {
-						status: 401,
-						headers: { 'Content-Type': 'application/json' },
-					});
+			// Store state and verifier in KV
+			await env.HOP.put(`oauth:${state}`, JSON.stringify({ codeVerifier }), {
+				expirationTtl: 600, // 10 minutes
+			});
+
+			// Build redirect URI from HOST env var or request origin
+			const redirectUri = env.HOST 
+				? `${env.HOST}/api/callback`
+				: new URL('/api/callback', request.url).toString();
+			console.log('OAuth initiation - redirect URI:', redirectUri);
+
+			const authUrl = new URL('/auth/authorize', env.INDIKO_URL);
+			authUrl.searchParams.set('response_type', 'code');
+			authUrl.searchParams.set('client_id', env.INDIKO_CLIENT_ID);
+			authUrl.searchParams.set('redirect_uri', redirectUri);
+			authUrl.searchParams.set('state', state);
+			authUrl.searchParams.set('code_challenge', codeChallenge);
+			authUrl.searchParams.set('code_challenge_method', 'S256');
+			authUrl.searchParams.set('scope', 'profile email');
+
+			return Response.redirect(authUrl.toString(), 302);
+		}
+
+		// OAuth callback endpoint
+		if (url.pathname === '/api/callback' && request.method === 'GET') {
+			const code = url.searchParams.get('code');
+			const state = url.searchParams.get('state');
+
+			if (!code || !state) {
+				return Response.redirect(new URL('/login?error=missing_params', request.url).toString(), 302);
+			}
+
+			// Retrieve and verify state
+			const oauthData = await env.HOP.get(`oauth:${state}`);
+			if (!oauthData) {
+				return Response.redirect(new URL('/login?error=invalid_state', request.url).toString(), 302);
+			}
+
+			const { codeVerifier } = JSON.parse(oauthData);
+			await env.HOP.delete(`oauth:${state}`);
+
+			// Exchange code for token
+			try {
+				// Build redirect URI from HOST env var or request origin
+				const redirectUri = env.HOST 
+					? `${env.HOST}/api/callback`
+					: new URL('/api/callback', request.url).toString();
+				console.log('Token exchange - redirect URI:', redirectUri);
+
+				const tokenUrl = new URL('/auth/token', env.INDIKO_URL);
+				const tokenBody = new URLSearchParams({
+					grant_type: 'authorization_code',
+					code,
+					client_id: env.INDIKO_CLIENT_ID,
+					client_secret: env.INDIKO_CLIENT_SECRET,
+					redirect_uri: redirectUri,
+					code_verifier: codeVerifier,
+				});
+
+				const tokenResponse = await fetch(tokenUrl.toString(), {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+					body: tokenBody.toString(),
+				});
+
+				if (!tokenResponse.ok) {
+					const errorText = await tokenResponse.text();
+					console.error('Token exchange failed:', tokenResponse.status, errorText);
+					return Response.redirect(new URL('/login?error=token_exchange_failed', request.url).toString(), 302);
+				}
+
+				const tokenData = await tokenResponse.json();
+
+				// Check if user has admin role
+				if (tokenData.role !== 'admin') {
+					return Response.redirect(new URL('/login?error=unauthorized_role', request.url).toString(), 302);
 				}
 
 				// Generate session token
-				const token = await generateSessionToken();
+				const sessionToken = nanoid(32);
 				const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-				// Store session in KV
-				await env.HOP.put(`session:${token}`, JSON.stringify({ expiresAt }), {
-					expirationTtl: 86400, // 24 hours
-				});
+				// Store session with user profile
+				await env.HOP.put(
+					`session:${sessionToken}`,
+					JSON.stringify({
+						expiresAt,
+						profile: tokenData.profile,
+						me: tokenData.me,
+						role: tokenData.role,
+					}),
+					{ expirationTtl: 86400 } // 24 hours
+				);
 
-				return new Response(JSON.stringify({ token }), {
-					headers: { 'Content-Type': 'application/json' },
-				});
+				// Redirect to main app with session token
+				const redirectUrl = new URL('/', request.url);
+				redirectUrl.searchParams.set('token', sessionToken);
+				return Response.redirect(redirectUrl.toString(), 302);
 			} catch (error) {
-				return new Response(JSON.stringify({ error: 'Invalid request' }), {
-					status: 400,
-					headers: { 'Content-Type': 'application/json' },
-				});
+				return Response.redirect(new URL('/login?error=unknown', request.url).toString(), 302);
 			}
 		}
 
@@ -161,7 +240,7 @@ export default {
 			
 			let urls = await Promise.all(
 				list.keys
-					.filter(key => !key.name.startsWith('session:'))
+					.filter(key => !key.name.startsWith('session:') && !key.name.startsWith('oauth:'))
 					.map(async (key) => ({
 						shortCode: key.name,
 						url: await env.HOP.get(key.name),
@@ -289,8 +368,33 @@ async function generateSessionToken(): Promise<string> {
 	return nanoid(32);
 }
 
+function generateCodeVerifier(): string {
+	return nanoid(64);
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(verifier);
+	const hash = await crypto.subtle.digest('SHA-256', data);
+	return base64UrlEncode(new Uint8Array(hash));
+}
+
+function base64UrlEncode(buffer: Uint8Array): string {
+	let binary = '';
+	for (let i = 0; i < buffer.byteLength; i++) {
+		binary += String.fromCharCode(buffer[i]);
+	}
+	return btoa(binary)
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=/g, '');
+}
+
 interface Env {
 	HOP: KVNamespace;
-	AUTH_PASSWORD: string;
 	API_KEY: string;
+	HOST?: string;
+	INDIKO_URL: string;
+	INDIKO_CLIENT_ID: string;
+	INDIKO_CLIENT_SECRET: string;
 }

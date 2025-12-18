@@ -20,3 +20,12 @@ id = "ae7cd39a622b466d876b8410d22d1397"
 type = "Text"
 globs = ["**/*.html"]
 fallthrough = false
+
+# Environment variables
+# For local development, set in .dev.vars file
+# For production, set as secrets:
+# wrangler secret put HOST
+# wrangler secret put INDIKO_URL
+# wrangler secret put INDIKO_CLIENT_ID
+# wrangler secret put INDIKO_CLIENT_SECRET
+# wrangler secret put API_KEY

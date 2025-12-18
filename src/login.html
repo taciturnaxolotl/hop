@@ -146,63 +146,34 @@
   <div class="login-container">
     <h1>🛎️ hop</h1>
     <p class="subtitle">// admin login</p>
-    <form id="loginForm">
-      <input type="password" id="password" placeholder="password" required autofocus />
-      <button type="submit">login</button>
-    </form>
+    <button id="oauthBtn" type="button">login with indiko</button>
     <div id="error" class="error"></div>
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
     const error = document.getElementById('error');
-    const passwordInput = document.getElementById('password');
+    const oauthBtn = document.getElementById('oauthBtn');
 
-    document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        passwordInput.focus();
-        passwordInput.select();
-      }
-    });
+    // Check for error in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    if (errorParam) {
+      const errorMessages = {
+        'unauthorized_role': 'Access denied: You need the admin role to access Hop',
+        'missing_params': 'Authentication failed: Missing required parameters',
+        'invalid_state': 'Authentication failed: Invalid or expired session',
+        'token_exchange_failed': 'Authentication failed: Could not verify credentials',
+        'unknown': 'Authentication failed: An unknown error occurred'
+      };
+      error.textContent = errorMessages[errorParam] || 'Authentication failed: ' + errorParam;
+      error.classList.add('show');
+    }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const password = passwordInput.value;
-      const submitBtn = form.querySelector('button');
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'logging in...';
-      error.classList.remove('show');
-
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Login failed');
-        }
-
-        // Store session token
-        localStorage.setItem('hop_session', data.token);
-        
-        // Redirect to main app
-        window.location.href = '/';
-      } catch (err) {
-        error.textContent = err.message;
-        error.classList.add('show');
-        passwordInput.value = '';
-        passwordInput.focus();
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'login';
-      }
+    // OAuth login
+    oauthBtn.addEventListener('click', () => {
+      oauthBtn.disabled = true;
+      oauthBtn.textContent = 'redirecting...';
+      window.location.href = '/api/login';
     });
   </script>
 </body>
