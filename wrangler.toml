@@ -21,6 +21,11 @@ type = "Text"
 globs = ["**/*.html"]
 fallthrough = false
 
+[[vars]]
+HOST = "https://hop.dunkirk.sh"
+REDIRECT_BASE = "https://dunkirk.sh/h"
+INDIKO_URL = "https://indiko.dunkirk.sh"
+
 # Environment variables
 # For local development, set in .dev.vars file
 # For production, set as secrets:
